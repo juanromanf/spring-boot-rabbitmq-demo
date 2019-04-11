@@ -3,21 +3,20 @@ package com.example.amqp.consumer.config;
 import com.example.amqp.common.domain.RabbitMqKeys;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Exchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
-import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
-import org.springframework.messaging.handler.annotation.support.DefaultMessageHandlerMethodFactory;
 
+@EnableRabbit
 @Configuration
-public class EventConsumerConfiguration implements RabbitListenerConfigurer {
+public class EventConsumerConfiguration {
     
     @Bean
-    public Exchange eventExchange() {
+    public TopicExchange eventExchange() {
         
         return new TopicExchange(RabbitMqKeys.TOPIC_EXCHANGE_NAME);
     }
@@ -29,33 +28,16 @@ public class EventConsumerConfiguration implements RabbitListenerConfigurer {
     }
     
     @Bean
-    public Binding binding(Queue queue, Exchange eventExchange) {
+    public Binding binding(Queue queue, TopicExchange eventExchange) {
         
         return BindingBuilder
                 .bind(queue)
                 .to(eventExchange)
-                .with(RabbitMqKeys.ORDERS_ROUTING_KEY)
-                .noargs();
+                .with(RabbitMqKeys.ORDERS_ROUTING_KEY);
     }
     
     @Bean
-    public MappingJackson2MessageConverter consumerJackson2MessageConverter() {
-        
-        return new MappingJackson2MessageConverter();
-    }
-    
-    @Bean
-    public DefaultMessageHandlerMethodFactory messageHandlerMethodFactory() {
-        
-        DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
-        factory.setMessageConverter(consumerJackson2MessageConverter());
-        
-        return factory;
-    }
-    
-    @Override
-    public void configureRabbitListeners(RabbitListenerEndpointRegistrar registrar) {
-        
-        registrar.setMessageHandlerMethodFactory(messageHandlerMethodFactory());
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter();
     }
 }
